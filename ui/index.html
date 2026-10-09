@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>molabi</title>
+<link rel="icon" href="/icon.svg">
+<style>
+@font-face { font-family: Geist; src: url(/fonts/geist.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url(/fonts/geist-mono.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+:root {
+  color-scheme: dark;
+  --night: #121614;   /* ground */
+  --rail: #161b18;
+  --spruce: #1a1f1c;  /* surface */
+  --moss: #232a26;    /* raised, selected */
+  --line: #252c28;
+  --line-2: #343c37;
+  --chalk: #e9ece8;   /* text */
+  --text-2: #b9c2bc;
+  --text-3: #8f9a93;
+  --text-4: #5f6b64;
+  --marigold: #e8b54a; --marigold-hi: #f3cd78; --on-marigold: #241a05;
+  --up: #6fcf97; --ice: #8fb8ff; --down: #f07a6a;
+  --up-wash: rgba(111,207,151,.12); --ice-wash: rgba(143,184,255,.12); --down-wash: rgba(240,122,106,.12);
+  --sans: Geist, "Segoe UI Variable Text", system-ui, sans-serif;
+  --mono: "Geist Mono", "Cascadia Mono", Consolas, monospace;
+  --r: 14px; --r-sm: 9px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--night); color: var(--chalk); font: 400 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--marigold); outline-offset: 2px; }
+.mono { font-family: var(--mono); }
+.dim { color: var(--text-3); }
+.faint { color: var(--text-4); }
+h1, h2 { margin: 0; letter-spacing: -0.02em; }
+h1 { font-size: 26px; font-weight: 650; }
+h2 { font-size: 15px; font-weight: 600; letter-spacing: 0; }
+[hidden] { display: none !important; }
+
+/* ---------- shell */
+.app { display: flex; min-height: 100%; }
+.rail { flex: 0 0 228px; position: sticky; top: 0; height: 100vh; padding: 24px 14px; background: var(--rail);
+  border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 24px; }
+.brand img { width: 28px; height: 28px; }
+.brand b { font-size: 19px; font-weight: 700; letter-spacing: -0.03em; }
+.nav { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border: 0; border-radius: var(--r-sm);
+  background: none; color: var(--text-2); font-weight: 500; text-align: left; cursor: pointer; transition: background .12s, color .12s; }
+.nav:hover { background: var(--spruce); color: var(--chalk); }
+.nav[aria-current="page"] { background: var(--moss); color: var(--chalk); font-weight: 600; }
+.nav .n { margin-left: auto; font: 12px var(--mono); color: var(--text-3); }
+.nav .n.alert { color: var(--down); }
+.serving { margin-top: auto; padding: 12px; border-radius: var(--r-sm); background: var(--spruce); }
+.serving div:first-child { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; }
+.serving div:last-child { font: 12px var(--mono); color: var(--text-3); }
+main { flex: 1; min-width: 0; padding: 32px 40px 56px; }
+.page { max-width: 1240px; display: flex; flex-direction: column; gap: 28px; animation: in .25s var(--ease); }
+@keyframes in { from { opacity: 0; transform: translateY(4px); } }
+.head p { margin: 4px 0 0; color: var(--text-3); }
+
+/* ---------- atoms */
+.sq { width: 8px; height: 8px; border-radius: 2px; background: var(--text-4); flex: none; }
+.sq.up { background: var(--up); } .sq.ice { background: var(--ice); } .sq.down { background: var(--down); }
+.btn { min-height: 40px; padding: 0 18px; border: 1px solid var(--line-2); border-radius: var(--r-sm); background: transparent;
+  font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s, transform .08s; }
+.btn:hover { background: var(--spruce); border-color: var(--text-4); }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: default; transform: none; }
+.btn.primary { background: var(--marigold); border-color: var(--marigold); color: var(--on-marigold); }
+.btn.primary:hover { background: var(--marigold-hi); border-color: var(--marigold-hi); }
+.btn.small { min-height: 32px; padding: 0 12px; font-size: 13px; border-color: transparent; color: var(--text-2); }
+.btn.small:hover { color: var(--chalk); background: var(--moss); }
+.btn.small.danger:hover { color: var(--down); background: var(--down-wash); }
+.panel { background: var(--spruce); border: 1px solid var(--line); border-radius: var(--r); }
+.box { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.label { font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: .06em; text-transform: uppercase; }
+.code { display: inline-block; font: 600 12px var(--mono); padding: 2px 7px; border-radius: 5px; }
+.code.ok { color: var(--up); background: var(--up-wash); }
+.code.ice { color: var(--ice); background: var(--ice-wash); }
+.code.bad { color: var(--down); background: var(--down-wash); }
+.chip { display: inline-block; font: 11.5px var(--mono); color: var(--ice); background: var(--ice-wash); padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+.empty { padding: 36px 24px; color: var(--text-2); }
+.empty b { display: block; color: var(--chalk); font-size: 15px; margin-bottom: 4px; }
+.sechead { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.sechead .sp { margin-left: auto; }
+input[type=text], input[type=number] { min-height: 44px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: var(--r-sm);
+  background: var(--night); outline: none; transition: border-color .12s; }
+input[type=text]:focus, input[type=number]:focus { border-color: var(--marigold); }
+input::placeholder { color: var(--text-4); }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--spruce); border: 1px solid var(--line); }
+.seg button { border: 0; background: none; min-height: 30px; padding: 0 12px; border-radius: 7px; cursor: pointer; font-size: 13px;
+  font-weight: 600; color: var(--text-3); }
+.seg button:hover { color: var(--chalk); }
+.seg button[aria-pressed="true"] { background: var(--moss); color: var(--chalk); }
+.toggle { position: relative; width: 36px; height: 20px; flex: none; appearance: none; margin: 0; border-radius: 10px;
+  background: var(--moss); border: 1px solid var(--line-2); cursor: pointer; transition: background .15s; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text-3); transition: transform .2s var(--ease), background .15s; }
+.toggle:checked { background: var(--marigold); border-color: var(--marigold); }
+.toggle:checked::after { transform: translateX(16px); background: var(--on-marigold); }
+
+/* ---------- tables */
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 12px; font-weight: 500; color: var(--text-3); padding: 11px 12px; white-space: nowrap; }
+td { padding: 11px 12px; border-top: 1px solid var(--line); vertical-align: middle; }
+th:first-child, td:first-child { padding-left: 18px; } th:last-child, td:last-child { padding-right: 18px; }
+tbody tr:hover td { background: rgba(233,236,232,.02); }
+.r { text-align: right; } .nowrap { white-space: nowrap; }
+.sub { display: block; font: 12px var(--sans); color: var(--text-3); margin-top: 2px; }
+.org { color: var(--text-3); }
+
+/* ---------- overview */
+.endpoint { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.endpoint .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.endpoint code { flex: 1; font: 500 22px var(--mono); letter-spacing: -0.01em; user-select: all; min-width: 260px; }
+.endpoint .env { font: 12.5px var(--mono); color: var(--text-3); }
+.vitals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.vitals div { padding: 16px 20px; display: flex; flex-direction: column; gap: 2px; }
+.vitals div + div { border-left: 1px solid var(--line); }
+.vitals span { font-size: 12.5px; color: var(--text-3); }
+.vitals b { font: 600 24px var(--mono); }
+.vitals b small { font-size: 24px; color: var(--text-4); font-weight: 600; }
+.vitals .warn b { color: var(--ice); } .vitals .bad b { color: var(--down); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-3); }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.bars { height: 104px; display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; align-items: end; padding: 14px; }
+.bars .col { display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; height: 74px; position: relative; }
+.bars .col i { display: block; border-radius: 2px; min-height: 0; }
+.bars .col.zero::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; border-radius: 1px; background: var(--moss); }
+.split { display: flex; flex-wrap: wrap; gap: 28px; }
+.split > section { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.lane { padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; }
+.lane + .lane { border-top: 1px solid var(--line); }
+.lane .top { display: flex; align-items: center; gap: 10px; }
+.lane .name { font: 500 13px var(--mono); }
+.lane .meter { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--moss); }
+.lane .meter i { display: block; }
+.lane .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12.5px; color: var(--text-3); }
+.lane .acts { margin-left: auto; display: flex; gap: 2px; }
+
+/* ---------- boxes */
+.add { padding: 20px 24px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.add .field { flex: 1 1 420px; }
+.add input { width: 100%; font-family: var(--mono); font-size: 13px; }
+.formmsg { flex-basis: 100%; font-size: 13px; color: var(--down); }
+.formmsg:empty { display: none; }
+.settings { padding: 20px 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+.settings input { width: 110px; font-family: var(--mono); }
+.settings .note { color: var(--text-3); font-size: 13px; align-self: center; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+  display: flex; align-items: center; gap: 16px; padding: 10px 10px 10px 18px; border-radius: 12px; background: var(--chalk);
+  color: var(--night); font-weight: 500; box-shadow: 0 12px 32px -12px rgba(0,0,0,.6); transition: transform .3s var(--ease), opacity .2s; }
+.toast.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.toast button { border: 0; background: var(--night); color: var(--chalk); min-height: 32px; padding: 0 12px; border-radius: 8px;
+  font-weight: 600; cursor: pointer; }
+
+@media (max-width: 860px) {
+  .app { flex-direction: column; }
+  .rail { position: static; height: auto; flex: none; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 12px; }
+  .brand { padding: 0 10px 0 4px; }
+  .serving { display: none; }
+  main { padding: 24px 16px 48px; }
+  .vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vitals div:nth-child(3) { border-left: 0; }
+  .vitals div:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Main">
+    <div class="brand"><img src="/icon.svg" alt=""><b>molabi</b></div>
+    <button class="nav" data-page="overview" aria-current="page">Overview</button>
+    <button class="nav" data-page="boxes">Boxes<span class="n" id="n-boxes"></span></button>
+    <button class="nav" data-page="requests">Requests<span class="n" id="n-req"></span></button>
+    <button class="nav" data-page="models">Models<span class="n" id="n-models"></span></button>
+    <div class="serving"><div><span class="sq" id="serve-sq"></span><span id="serve-txt">Starting</span></div><div id="serve-addr"></div></div>
+  </nav>
+
+  <main>
+    <!-- overview -->
+    <div class="page" id="overview">
+      <div class="head"><h1>Overview</h1><p id="ov-sum">Loading the pool.</p></div>
+      <section class="panel endpoint" aria-label="Endpoint">
+        <div class="label">Point any OpenAI client here</div>
+        <div class="row">
+          <code id="ep"></code>
+          <button class="btn primary" id="copy-url">Copy URL</button>
+          <button class="btn" id="copy-env">Copy env vars</button>
+        </div>
+        <div class="env" id="env"></div>
+      </section>
+      <section class="box vitals" aria-label="Vitals" aria-live="polite">
+        <div id="v-up"><span>Boxes up</span><b>-</b></div>
+        <div id="v-ok"><span>Answered</span><b>-</b></div>
+        <div id="v-lat"><span>Median latency</span><b>-</b></div>
+        <div id="v-cool"><span>Cooling</span><b>-</b></div>
+      </section>
+      <section aria-label="Activity" style="display:flex;flex-direction:column;gap:12px">
+        <div class="sechead">
+          <h2>Activity</h2><span class="dim" style="font-size:12.5px">requests per minute, last 30 minutes</span>
+          <span class="legend sp"><span><i class="sq up"></i>answered</span><span><i class="sq ice"></i>moved after a 429</span><span><i class="sq down"></i>failed</span></span>
+        </div>
+        <div class="box bars" id="bars"></div>
+      </section>
+      <div class="split">
+        <section aria-label="Boxes">
+          <div class="sechead"><h2>Boxes</h2><button class="btn small sp" data-goto="boxes">Manage boxes</button></div>
+          <div class="box" id="ov-boxes"></div>
+        </section>
+        <section aria-label="Recent requests">
+          <div class="sechead"><h2>Recent requests</h2><button class="btn small sp" data-goto="requests">All requests</button></div>
+          <div class="box tablewrap"><table><thead><tr><th>Time</th><th>Result</th><th>Model</th><th class="r">Latency</th></tr></thead><tbody id="ov-req"></tbody></table></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- boxes -->
+    <div class="page" id="boxes" hidden>
+      <div class="head"><h1>Boxes</h1><p>Paste a molab box URL. molabi finds its notebook session, checks it every minute, and sends requests only to boxes that are up.</p></div>
+      <form class="panel add" id="add">
+        <div class="field"><label for="url">Box URL</label>
+          <input type="text" id="url" placeholder="https://sb-xxxxxxxxxxxxxxxx.sb.molab.run" autocomplete="off" spellcheck="false" aria-describedby="add-msg"></div>
+        <button class="btn primary" id="add-btn">Add box</button>
+        <button class="btn" type="button" id="recheck-all">Recheck all</button>
+        <div class="formmsg" id="add-msg" role="alert"></div>
+      </form>
+      <div class="box" id="box-list"></div>
+      <form class="panel settings" id="settings">
+        <div class="field"><label for="cooldown">Rest after a 429 (seconds)</label><input type="number" id="cooldown" min="5"></div>
+        <div class="field"><label for="check">Health check every (seconds)</label><input type="number" id="check" min="10"></div>
+        <button class="btn">Save settings</button>
+        <span class="note" id="settings-note">A rate-limited box rests for that model only; other models keep using it.</span>
+      </form>
+    </div>
+
+    <!-- requests -->
+    <div class="page" id="requests" hidden>
+      <div class="head sechead" style="align-items:flex-end">
+        <div><h1>Requests</h1><p>Every call through the endpoint, newest first. A 429 moves the request to the next box before the client sees anything.</p></div>
+        <div class="seg sp" role="group" aria-label="Filter requests">
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="moved" aria-pressed="false">Moved</button>
+          <button type="button" data-filter="err" aria-pressed="false">Failed</button>
+        </div>
+      </div>
+      <div class="box tablewrap"><table>
+        <thead><tr><th>Time</th><th>Result</th><th>Model</th><th>Box</th><th>Route</th><th>Mode</th><th class="r">Latency</th></tr></thead>
+        <tbody id="req-rows"></tbody>
+      </table></div>
+    </div>
+
+    <!-- models -->
+    <div class="page" id="models" hidden>
+      <div class="head sechead" style="align-items:flex-end">
+        <div><h1>Models</h1><p>Models switched on are listed at <span class="mono">/v1/models</span> and accepted by the endpoint. A test sends one short prompt through the pool.</p></div>
+        <button class="btn sp" id="test-all">Test all</button>
+      </div>
+      <div class="box tablewrap"><table>
+        <thead><tr><th>On</th><th>Model</th><th>Last test</th><th class="r">Latency</th><th></th></tr></thead>
+        <tbody id="model-rows"></tbody>
+      </table></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"><span id="toast-msg"></span><button type="button" id="toast-act"></button></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+const call = (name, args = {}) => fetch('/ui/' + name, {method: 'POST', headers: {'content-type': 'application/json'},
+  body: JSON.stringify(args)}).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(r => r.result);
+
+let S = null, filter = 'all', settingsLoaded = false, online = true;
+const testing = new Set();
+const base = location.origin + '/v1';
+$('#ep').textContent = base;
+$('#env').textContent = `OPENAI_BASE_URL=${base} · OPENAI_API_KEY=anything`;
+$('#serve-addr').textContent = location.host;
+
+// ---------- navigation
+function go(page) {
+  document.querySelectorAll('.nav').forEach(n => n.dataset.page === page ? n.setAttribute('aria-current', 'page') : n.removeAttribute('aria-current'));
+  document.querySelectorAll('.page').forEach(p => p.hidden = p.id !== page);
+  try { localStorage.setItem('molabi.page', page); } catch {}
+}
+document.querySelectorAll('.nav').forEach(n => n.onclick = () => go(n.dataset.page));
+document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => go(b.dataset.goto));
+{ let p = location.hash.slice(1); try { p = p || localStorage.getItem('molabi.page'); } catch {}
+  if (p && document.querySelector('.page#' + CSS.escape(p))) go(p); }
+
+// ---------- clipboard + toast
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = document.createElement('textarea'); t.value = text; document.body.append(t); t.select(); document.execCommand('copy'); t.remove(); }
+  const was = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => btn.textContent = was, 1400);
+}
+$('#copy-url').onclick = e => copy(base, e.currentTarget);
+$('#copy-env').onclick = e => copy(`OPENAI_BASE_URL=${base}\nOPENAI_API_KEY=anything`, e.currentTarget);
+let toastTimer;
+function toast(msg, label, fn) {
+  $('#toast-msg').textContent = msg;
+  $('#toast-act').textContent = label || ''; $('#toast-act').hidden = !label;
+  $('#toast-act').onclick = () => { $('#toast').classList.remove('show'); fn && fn(); };
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 6000);
+}
+
+// ---------- formatting
+const host = u => u.replace(/^https?:\/\//, '').replace(/\.sb\.molab\.run$/, '');
+const ago = t => { if (!t) return 'not checked yet'; const s = Math.max(0, Math.round(S.now - t)); return 'checked ' + (s < 60 ? s + 's' : Math.round(s / 60) + 'm') + ' ago'; };
+const clock = t => new Date(t * 1000).toLocaleTimeString([], {hour12: false});
+const dur = v => v >= 1000 ? (v / 1000).toFixed(1) + ' s' : v + ' ms';
+const kind = r => r.status === 429 || (r.status < 300 && r.notes.length) ? 'ice' : r.status >= 300 ? 'bad' : 'ok';
+const model = id => { const i = id.indexOf('/'); return i < 0 ? esc(id) : `<span class="org">${esc(id.slice(0, i + 1))}</span>${esc(id.slice(i + 1))}`; };
+const route = r => r.status >= 300 ? esc(r.notes[r.notes.length - 1] || 'failed')
+  : r.notes.length ? esc(r.notes.join(', ')) + ', then ' + esc(r.box) : 'direct';
+const boxState = b => b.up ? (Object.keys(b.cooling).length ? 'ice' : 'up') : b.err === 'Checking...' ? '' : 'down';
+
+// ---------- overview
+function renderOverview() {
+  const up = S.boxes.filter(b => b.up), api = S.log.filter(r => r.source === 'api');
+  const ok = api.filter(r => r.status < 300), cooling = S.boxes.reduce((n, b) => n + Object.keys(b.cooling).length, 0);
+  const lat = ok.map(r => r.ms).sort((a, b) => a - b), med = lat.length ? lat[lat.length >> 1] : null;
+  $('#v-up b').innerHTML = `${up.length}<small>/${S.boxes.length}</small>`;
+  $('#v-up').className = S.boxes.length && !up.length ? 'bad' : '';
+  $('#v-ok b').innerHTML = api.length ? `${Math.round(100 * ok.length / api.length)}<small>%</small>` : '<small>-</small>';
+  $('#v-ok').className = api.length && ok.length / api.length < .9 ? 'bad' : '';
+  $('#v-lat b').innerHTML = med == null ? '<small>-</small>' : med >= 1000 ? `${(med / 1000).toFixed(1)}<small> s</small>` : `${med}<small> ms</small>`;
+  $('#v-cool b').textContent = cooling; $('#v-cool').className = cooling ? 'warn' : '';
+
+  let sum;
+  if (!S.boxes.length) sum = 'No boxes yet. Add a molab box to start serving.';
+  else if (!up.length) sum = 'No box is taking requests right now. Check the Boxes page.';
+  else sum = `${up.length} of ${S.boxes.length} box${S.boxes.length > 1 ? 'es are' : ' is'} taking requests.` +
+    (cooling ? ` ${cooling} model${cooling > 1 ? 's are' : ' is'} cooling down after a rate limit.` : '');
+  $('#ov-sum').textContent = sum;
+
+  // activity: 30 one-minute buckets ending now
+  const buckets = Array.from({length: 30}, () => ({ok: 0, ice: 0, bad: 0}));
+  for (const r of api) { const m = Math.floor((S.now - r.t) / 60); if (m >= 0 && m < 30) buckets[29 - m][kind(r)]++; }
+  const max = Math.max(4, ...buckets.map(b => b.ok + b.ice + b.bad)), px = n => n ? Math.max(2, Math.round(70 * n / max)) : 0;
+  $('#bars').innerHTML = buckets.map((b, i) => {
+    const n = b.ok + b.ice + b.bad;
+    return `<div class="col${n ? '' : ' zero'}" title="${29 - i} min ago: ${n} request${n === 1 ? '' : 's'}">` +
+      `<i style="height:${px(b.bad)}px;background:var(--down)"></i><i style="height:${px(b.ice)}px;background:var(--ice)"></i><i style="height:${px(b.ok)}px;background:var(--up)"></i></div>`;
+  }).join('');
+
+  $('#ov-boxes').innerHTML = S.boxes.length ? S.boxes.map(b => lane(b, false)).join('')
+    : `<div class="empty"><b>No boxes yet</b>Add one on the Boxes page. You only need its URL.</div>`;
+  const recent = S.log.slice(0, 7);
+  $('#ov-req').innerHTML = recent.length ? recent.map(r => `<tr>
+      <td class="mono dim nowrap" style="font-size:12px">${clock(r.t)}</td>
+      <td><span class="code ${kind(r)}">${r.status}</span></td>
+      <td class="mono" style="font-size:12.5px">${model(r.model)}<span class="sub">${route(r)}</span></td>
+      <td class="mono r nowrap" style="font-size:12.5px">${dur(r.ms)}</td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty"><b>No requests yet</b>Copy the URL above into your agent. Calls show up here live.</td></tr>`;
+}
+
+function lane(b, actions) {
+  const st = boxState(b), total = b.ok + b.limited + b.fail, w = n => total ? 100 * n / total : 0, cool = Object.entries(b.cooling);
+  const meter = b.up ? `<div class="meter" aria-hidden="true"><i style="width:${w(b.ok)}%;background:var(--up)"></i><i style="width:${w(b.limited)}%;background:var(--ice)"></i><i style="width:${w(b.fail)}%;background:var(--down)"></i></div>` : '';
+  const meta = b.up
+    ? `${b.ok} answered · ${b.limited} rate-limited · ${b.fail} failed · ${ago(b.checked)}${cool.map(([m, s]) => ` <span class="chip">${esc(m.split('/').pop())} ${s}s</span>`).join('')}`
+    : esc(b.err === 'Checking...' ? 'Checking the box...' : b.err);
+  const acts = actions ? `<span class="acts"><button class="btn small" data-do="recheck" data-url="${esc(b.url)}">Recheck</button><button class="btn small danger" data-do="remove" data-url="${esc(b.url)}">Remove</button></span>` : '';
+  return `<div class="lane"><div class="top"><span class="sq ${st}"></span><span class="name">${esc(host(b.url))}</span>
+    <span class="mono dim" style="font-size:12px;${actions ? '' : 'margin-left:auto'}">${b.sid ? esc(b.sid) : st === 'down' ? '<span style="color:var(--down)">down</span>' : ''}</span>${acts}</div>
+    ${meter}<div class="meta">${meta}</div></div>`;
+}
+
+// ---------- boxes
+$('#add').onsubmit = async e => {
+  e.preventDefault();
+  const url = $('#url').value.trim();
+  if (!url) { $('#add-msg').textContent = 'Paste a box URL first.'; $('#url').focus(); return; }
+  if (!/molab\.run|^https?:\/\/|^\d/.test(url)) { $('#add-msg').textContent = 'That does not look like a box URL. It should look like https://sb-xxxx.sb.molab.run'; $('#url').focus(); return; }
+  $('#add-msg').textContent = ''; $('#add-btn').disabled = true; $('#add-btn').textContent = 'Checking box...';
+  try {
+    const added = await call('add_box', {url});
+    await refresh();
+    const b = S.boxes.find(x => x.url === added);
+    if (b && !b.up) $('#add-msg').textContent = `Added, but it can't take requests yet: ${b.err}`;
+    else toast(`Added ${host(added)}. It is taking requests.`);
+    $('#url').value = '';
+  } catch { $('#add-msg').textContent = 'molabi could not save the box. Is the app still running?'; }
+  $('#add-btn').disabled = false; $('#add-btn').textContent = 'Add box';
+};
+$('#recheck-all').onclick = async e => { const b = e.currentTarget; b.disabled = true; b.textContent = 'Checking...'; await call('recheck'); await refresh(); b.disabled = false; b.textContent = 'Recheck all'; };
+$('#box-list').onclick = async e => {
+  const b = e.target.closest('button[data-do]'); if (!b) return;
+  const url = b.dataset.url;
+  if (b.dataset.do === 'remove') {
+    await call('remove_box', {url}); refresh();
+    toast(`Removed ${host(url)}`, 'Undo', async () => { await call('add_box', {url}); refresh(); });
+  } else { b.disabled = true; b.textContent = 'Checking...'; await call('recheck', {url}); refresh(); }
+};
+function renderBoxes() {
+  $('#box-list').innerHTML = S.boxes.length ? S.boxes.map(b => lane(b, true)).join('')
+    : `<div class="empty"><b>No boxes yet</b>Open a notebook on molab, copy its sb-....sb.molab.run address, and paste it above.</div>`;
+}
+$('#settings').onsubmit = async e => {
+  e.preventDefault();
+  await call('settings', {cooldown: +$('#cooldown').value || 60, check_every: +$('#check').value || 60});
+  toast('Settings saved.');
+};
+
+// ---------- requests
+document.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => {
+  filter = b.dataset.filter;
+  document.querySelectorAll('[data-filter]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  renderRequests();
+});
+function renderRequests() {
+  const rows = S.log.filter(r => filter === 'all' || (filter === 'err' ? r.status >= 300 : r.status < 300 && r.notes.length));
+  const none = {all: ['No requests yet', 'Point any OpenAI client at the endpoint on the Overview page.'],
+    moved: ['Nothing was moved', 'No request has hit a rate limit yet.'], err: ['No failed requests', 'Everything that came in was answered.']}[filter];
+  $('#req-rows').innerHTML = rows.length ? rows.map(r => `<tr>
+      <td class="mono dim nowrap" style="font-size:12px">${clock(r.t)}</td>
+      <td><span class="code ${kind(r)}">${r.status}</span></td>
+      <td class="mono" style="font-size:12.5px">${model(r.model)}</td>
+      <td class="mono nowrap" style="font-size:12.5px">${r.box ? esc(r.box) : '<span class="faint">none</span>'}</td>
+      <td style="font-size:12.5px;color:var(--text-2)">${route(r)}</td>
+      <td class="dim">${r.source === 'test' ? 'test' : r.stream ? 'stream' : 'json'}</td>
+      <td class="mono r nowrap" style="font-size:12.5px">${dur(r.ms)}</td></tr>`).join('')
+    : `<tr><td colspan="7" class="empty"><b>${none[0]}</b>${none[1]}</td></tr>`;
+}
+
+// ---------- models
+async function test(id) {
+  testing.add(id); renderModels();
+  try { await call('test_model', {id}); } finally { testing.delete(id); await refresh(); }
+}
+$('#test-all').onclick = async e => {
+  const b = e.currentTarget; b.disabled = true; b.textContent = 'Testing...';
+  await Promise.all(S.models.filter(m => m.enabled).map(m => test(m.id)));
+  b.disabled = false; b.textContent = 'Test all';
+};
+$('#model-rows').onchange = async e => {
+  if (e.target.matches('.toggle')) { await call('toggle_model', {id: e.target.dataset.id, enabled: e.target.checked}); refresh(); }
+};
+$('#model-rows').onclick = e => { const b = e.target.closest('button[data-test]'); if (b) test(b.dataset.test); };
+function renderModels() {
+  $('#model-rows').innerHTML = S.models.map(m => {
+    const t = m.test, busy = testing.has(m.id);
+    const res = busy ? '<span class="dim">Testing...</span>' : !t ? '<span class="faint">not tested</span>'
+      : t.ok ? `<span class="code ok">OK</span> <span class="mono dim" style="font-size:12px">replied "${esc(t.text)}"</span>`
+      : `<span class="code ${/\b429\b/.test(t.err) ? 'ice' : 'bad'}">failed</span><span class="sub" style="color:var(--down)">${esc(t.err)}</span>`;
+    return `<tr>
+      <td><input type="checkbox" class="toggle" data-id="${esc(m.id)}" ${m.enabled ? 'checked' : ''} aria-label="Serve ${esc(m.id)}"></td>
+      <td class="mono" style="font-size:12.5px;${m.enabled ? '' : 'opacity:.5'}">${model(m.id)}</td>
+      <td>${res}</td>
+      <td class="mono r nowrap" style="font-size:12.5px">${t && !busy ? dur(t.ms) : ''}</td>
+      <td class="r"><button class="btn small" data-test="${esc(m.id)}" ${busy || !m.enabled ? 'disabled' : ''}>Test</button></td></tr>`;
+  }).join('');
+}
+
+// ---------- loop
+function renderChrome() {
+  const up = S.boxes.filter(b => b.up).length, failed = S.log.filter(r => r.status >= 300).length;
+  $('#n-boxes').textContent = `${up}/${S.boxes.length}`;
+  $('#n-boxes').className = 'n' + (S.boxes.length && !up ? ' alert' : '');
+  $('#n-req').textContent = S.log.length;
+  $('#n-req').className = 'n' + (failed ? ' alert' : '');
+  $('#n-models').textContent = S.models.filter(m => m.enabled).length;
+}
+function setOnline(v) {
+  online = v;
+  $('#serve-sq').className = 'sq ' + (v ? 'up' : 'down');
+  $('#serve-txt').textContent = v ? 'Serving' : 'Not responding';
+}
+async function refresh() {
+  try { S = await call('state'); setOnline(true); } catch { setOnline(false); return; }
+  if (!settingsLoaded) { $('#cooldown').value = S.cooldown; $('#check').value = S.check_every; settingsLoaded = true; }
+  renderChrome(); renderOverview(); renderBoxes(); renderRequests(); renderModels();
+}
+refresh(); setInterval(refresh, 1500);
+</script>
+</body>
+</html>
